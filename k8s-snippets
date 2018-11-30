@@ -1,0 +1,40 @@
+const Client = require('kubernetes-client').Client;
+const config = require('kubernetes-client').config;
+const sampleDeployment = require('./deployment.json');
+const crdJson = require('./crd.json');
+const serviceJson = require('./service.json');
+const _ = require('lodash');
+
+try {
+
+  serviceJson.spec.selector.couchdb_cr = "service-fabrik"
+  sampleDeployment.metadata.name = "service-fabrik"
+  serviceJson.metadata.name = "service-fabrik-service"
+
+  const Client = require('kubernetes-client').Client
+  const config = require('kubernetes-client').config
+  const client = new Client({ config: config.fromKubeconfig(), version: '1.9' })
+
+  //client.addCustomResourceDefinition(crdJson); 
+  client.loadSpec()
+       .then(() => client.addCustomResourceDefinition(crdJson))
+//       .then(() => client.apis['cache.example.com'].v1alpha1.namespaces('default').couchdbs.post({ body: sampleDeployment }))
+     .then(() => client.apis['cache.example.com'].v1alpha1.namespaces('default').couchdbs("example-couchdb").get())
+//     .then(couchdbs => console.log(couchdbs.body.items))
+//     .then(()=>client.api.v1.namespaces('default').services.post({body: serviceJson}))
+//     .then(()=>client.api.v1.namespaces('default').service("couchdb-ip-service").get())
+     .then(()=>client.api.extensions.v1beta1.namespaces('default').deployments("example-couchdb").get())
+     .then(service => {console.log(JSON.stringify(service)); return service} )
+     .then(service => {console.log(service.body.kind )})
+
+     //.then(()=>client.api.v1.namespaces('default').service("service-fabrik-service").delete())
+     //.then(()=> client.apis['cache.example.com'].v1alpha1.namespaces('default').couchdbs("service-fabrik").delete())
+    // .then(couchdbs => console.log(couchdbs.body.items))
+    // .then(()=>client.api.v1.namespaces('default').service("service-fabrik-service").get())
+    // .then(service => console.log(_.get(service,"body.spec.clusterIP")))
+
+    //api/v1/namespaces/default/services/service-fabrik-service
+    .catch(e => console.log('Error: ', e));
+} catch (err) {
+  console.error('Error: ', err);
+}
